@@ -12,4 +12,11 @@ jobs:
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev
       - run: make test
-      - run: make loadable
+      - name: Loadable build (Linux)
+        if: runner.os == 'Linux'
+        run: make test-loadable
+      - name: Loadable build (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install sqlite
+          make loadable SQLITE_INCLUDE="$(brew --prefix sqlite)/include"

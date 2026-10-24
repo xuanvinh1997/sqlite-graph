@@ -61,7 +61,10 @@ the system library call `sqlite3_graph_register` on each connection instead (thi
 wrapper such as GRDB opens connections for you: register in its connection-preparation hook).
 
 **Loadable extension** (desktop SQLite with `load_extension` enabled): `make loadable`, then
-`.load ./build/libsqlitegraph sqlite3_sqlitegraph_init`.
+`.load ./build/libsqlitegraph sqlite3_sqlitegraph_init`. On macOS, Apple's SDK `sqlite3ext.h` compiles the
+extension API out (the library would call `sqlite3_*` directly and crash when loaded), so point the build at
+real headers: `make loadable SQLITE_INCLUDE=$(brew --prefix sqlite)/include`. `make test-loadable` loads it into
+Python's `sqlite3` as a smoke test.
 
 Requires SQLite 3.38+ with JSON functions (built in by default).
 
@@ -70,6 +73,7 @@ Requires SQLite 3.38+ with JSON functions (built in by default).
 ```
 make test                                              # against the system SQLite
 make test-amalgamation SQLITE_DIR=/path/to/sqlite3.c/  # against an amalgamation you ship (also covers auto-register)
+make test-loadable                                     # loadable build, loaded from Python (macOS: set SQLITE_INCLUDE)
 ```
 
 The suite covers depth, direction, project/relation filters, limits, error paths, identifier and value

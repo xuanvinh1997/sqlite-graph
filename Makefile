@@ -1,7 +1,10 @@
 CC      ?= cc
+# Loadable builds need a real sqlite3ext.h; Apple's SDK header compiles the extension API out.
+SQLITE_INCLUDE ?=
 CFLAGS  ?= -std=c11 -O2 -g -Wall -Wextra -Wno-missing-field-initializers
 UNAME   := $(shell uname -s)
 LIBEXT  := $(if $(filter Darwin,$(UNAME)),dylib,so)
+SHARED  := $(if $(filter Darwin,$(UNAME)),-dynamiclib -undefined dynamic_lookup,-shared)
 
 test: build/test_graph
 	./build/test_graph
@@ -22,9 +25,12 @@ loadable: build/libsqlitegraph.$(LIBEXT)
 
 build/libsqlitegraph.$(LIBEXT): src/sqlite_graph.c include/sqlite_graph.h
 	@mkdir -p build
-	$(CC) $(CFLAGS) -fPIC -shared -Iinclude src/sqlite_graph.c -lm -o $@
+	$(CC) $(CFLAGS) -fPIC $(SHARED) $(if $(SQLITE_INCLUDE),-I$(SQLITE_INCLUDE)) -Iinclude src/sqlite_graph.c -lm -o $@
+
+test-loadable: loadable
+	python3 tests/load_test.py build/libsqlitegraph.$(LIBEXT)
 
 clean:
 	rm -rf build
 
-.PHONY: test test-amalgamation loadable clean
+.PHONY: test test-amalgamation loadable test-loadable clean
